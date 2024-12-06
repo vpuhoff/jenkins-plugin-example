@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('Custom JS loaded from custom.js!');
-    // Ваш код здесь
+    // Выводим в консоль, чтобы знать что плагин загрузился.
+    console.log('Custom JS loaded from resources.js!');
 });
+

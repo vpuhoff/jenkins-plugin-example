@@ -1,4 +1,5 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
     <script type="text/javascript" src="/plugin/viewfilter/js/resources.js"/>
+    <link rel="stylesheet" type="text/css" href="/plugin/viewfilter/css/resources.css"/>
 </j:jelly>
