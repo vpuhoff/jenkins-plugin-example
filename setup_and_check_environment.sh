@@ -92,35 +92,60 @@ setup_java_home() {
 # Maven Management
 check_maven() {
     log_info "Checking Maven installation..."
-    if check_command mvn; then
+    # First check PATH
+    if command -v mvn &>/dev/null; then
         maven_version=$(mvn -version | grep 'Apache Maven' | awk '{print $3}')
         log_success "Maven is installed: version $maven_version"
         return 0
-    else
-        log_error "Maven is not installed"
-        return 1
     fi
+
+    # Check common Maven installation locations
+    local maven_locations=(
+        "/opt/maven/bin/mvn"
+        "/usr/local/bin/mvn"
+        "$HOME/apache-maven/bin/mvn"
+    )
+
+    for location in "${maven_locations[@]}"; do
+        if [ -x "$location" ]; then
+            log_success "Maven found at $location"
+            # Add Maven to PATH for current session
+            export PATH="$(dirname $location):$PATH"
+            return 0
+        fi
+    done
+
+    log_error "Maven is not installed"
+    return 1
 }
 
 install_maven() {
     log_info "Installing Maven ${MAVEN_VERSION}..."
+    if check_command mvn; then
+        log_success "Maven already installed"
+        return 0
+    fi
+
     wget -q "$MAVEN_DOWNLOAD_URL" -O /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
     tar -xzf /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
-    ln -sf /opt/apache-maven-${MAVEN_VERSION} "$MAVEN_INSTALL_DIR"
+    ln -sf /opt/apache-maven-${MAVEN_VERSION} $MAVEN_INSTALL_DIR
     
-    # Configure Maven environment
+    # Create and update environment file
     echo "export MAVEN_HOME=$MAVEN_INSTALL_DIR" > /etc/profile.d/maven.sh
     echo "export PATH=\$MAVEN_HOME/bin:\$PATH" >> /etc/profile.d/maven.sh
     chmod +x /etc/profile.d/maven.sh
-    source /etc/profile.d/maven.sh
     
-    rm -f /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+    # Update current session
+    export MAVEN_HOME=$MAVEN_INSTALL_DIR
+    export PATH=$MAVEN_HOME/bin:$PATH
     
+    # Verify installation
     if check_maven; then
         log_success "Maven installed successfully"
+        rm -f /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
     else
-        log_error "Failed to install Maven"
-        exit 1
+        log_error "Maven installation failed"
+        return 1
     fi
 }
 
