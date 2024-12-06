@@ -1,0 +1,27 @@
+# Maven target folder
+/target/
+
+# IDE specific files
+/.idea/
+/*.iml
+/.classpath
+/.project
+/.settings/
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Maven-specific files
+.mvn/
+.settings.xml
+
+# Dependency-related
+**/dependency-reduced-pom.xml
+**/release.properties
+**/pom.xml.releaseBackup
+**/pom.xml.tag
+**/buildNumber.properties

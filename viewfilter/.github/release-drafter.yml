@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: viewfilter-$NEXT_MINOR_VERSION
