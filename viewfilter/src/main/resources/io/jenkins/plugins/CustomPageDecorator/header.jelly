@@ -1,5 +1,22 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
-    <script type="text/javascript" src="/plugin/viewfilter/js/resources.js"/>
-    <link rel="stylesheet" type="text/css" href="/plugin/viewfilter/css/resources.css"/>
+    
+    <!-- Get the current URL path -->
+    <j:set var="currentUrl" value="${request.getRequestURI()}"/>
+    
+    <!-- Conditional CSS loading based on URL -->
+    <j:choose>
+        <j:when test="${currentUrl.contains('/newJob')}">
+            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/viewfilter/css/cat-blue.css"/>
+            <script type="text/javascript" src="${rootURL}/plugin/viewfilter/js/cat.js"/>
+        </j:when>
+        <j:when test="${currentUrl.contains('/build')}">
+            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/viewfilter/css/build.css"/>
+        </j:when>
+        <j:otherwise>
+            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/viewfilter/css/cat.css"/>
+            <script type="text/javascript" src="${rootURL}/plugin/viewfilter/js/cat.js"/>
+            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/viewfilter/css/default.css"/>
+        </j:otherwise>
+    </j:choose>
 </j:jelly>

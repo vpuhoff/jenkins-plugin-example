@@ -3,44 +3,6 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('Custom JS loaded from resources.js!');
 });
 
-// Всратые снежинки
-function createSnowflake() {
-    const snowflake = document.createElement('div');
-    snowflake.classList.add('snowflake');
-    snowflake.innerHTML = '❆';
-    
-    // Set initial position
-    snowflake.style.left = Math.random() * 100 + '%';
-    
-    // Faster, more consistent fall duration
-    const duration = Math.random() * 1 + 2; // 2-3 seconds
-    snowflake.style.animationDuration = duration + 's';
-    
-    // Visual properties
-    snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-    snowflake.style.fontSize = Math.random() * 10 + 10 + 'px';
-    
-    // Add gentle sway
-    const swayAmount = Math.random() * 30;
-    snowflake.style.transform = `translateX(${Math.random() * swayAmount - swayAmount/2}px)`;
-    
-    document.querySelector('.snowflakes').appendChild(snowflake);
-    
-    // Remove after animation completes
-    setTimeout(() => {
-      snowflake.remove();
-    }, duration * 1000);
-  }
-  
-window.onload = function() {
-    const snowflakesContainer = document.createElement('div');
-    snowflakesContainer.classList.add('snowflakes');
-    document.body.appendChild(snowflakesContainer);
-
-    // Create snowflakes less frequently
-    setInterval(createSnowflake, 300);
-};
-
 /* Летающий кот */
 
 window.onload = function() {

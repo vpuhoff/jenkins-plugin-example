@@ -1,0 +1,96 @@
+
+/* Летающий кот */
+.cat {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+  }
+
+.cat-body {
+    position: absolute;
+    width: 40px;
+    height: 30px;
+    background: #164af5;
+    border-radius: 20px;
+    top: 20px;
+}
+
+.cat-head {
+    position: absolute;
+    width: 30px;
+    height: 25px;
+    background: #164af5;
+    border-radius: 50%;
+    top: 5px;
+    left: 5px;
+}
+
+.cat-ear {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 15px solid #164af5;
+    top: -5px;
+}
+
+.cat-ear.left {
+    left: 0;
+    transform: rotate(-30deg);
+}
+
+.cat-ear.right {
+    right: 0;
+    transform: rotate(30deg);
+}
+
+.cat-eye {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    top: 10px;
+    animation: blink 4s infinite;
+}
+
+.cat-eye.left {
+    left: 8px;
+}
+
+.cat-eye.right {
+    right: 8px;
+}
+
+.cat-tail {
+    position: absolute;
+    width: 20px;
+    height: 8px;
+    background: #164af5;
+    right: -15px;
+    top: 25px;
+    border-radius: 0 4px 4px 0;
+    animation: wag 2s infinite;
+    }
+
+    @keyframes blink {
+        0%, 45%, 50%, 100% {
+            transform: scaleY(1);
+        }
+        48% {
+            transform: scaleY(0.1);
+        }
+    }
+
+    @keyframes wag {
+        0%, 100% {
+            transform: rotate(0deg);
+        }
+        50% {
+            transform: rotate(20deg);
+        }
+    }
