@@ -1,132 +1,247 @@
 #!/bin/bash
 
-# Версии компонентов
+# Configuration
 JAVA_VERSION="17"
 MAVEN_VERSION="3.9.6"
 MAVEN_DOWNLOAD_URL="https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
 MAVEN_INSTALL_DIR="/opt/maven"
-DOCKER_COMPOSE_VERSION="1.29.2"
+DOCKER_COMPOSE_VERSION="2.20.2"
 
-# Проверка команды
-check_command() {
-  if command -v "$1" &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
 }
 
-# Установка OpenJDK
+log_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+log_info() {
+    echo -e ">>> $1"
+}
+
+# Check if script is run as root
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        log_error "Please run this script as root (with sudo)"
+        exit 1
+    fi
+}
+
+# Check if a command exists
+check_command() {
+    if command -v "$1" &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Java Management
+check_java() {
+    log_info "Checking Java installation..."
+    if check_command java; then
+        java_version=$(java -version 2>&1 | grep 'version' | awk -F '"' '{print $2}')
+        if [[ "$java_version" == ${JAVA_VERSION}* ]]; then
+            log_success "Java ${JAVA_VERSION} is installed: $java_version"
+            return 0
+        else
+            log_warning "Found Java $java_version, but version ${JAVA_VERSION} is required"
+            return 1
+        fi
+    else
+        log_error "Java is not installed"
+        return 1
+    fi
+}
+
 install_java() {
-  echo ">>> Установка OpenJDK ${JAVA_VERSION}..."
-  if check_command java; then
-    echo "Java уже установлена."
-  else
+    log_info "Installing Java ${JAVA_VERSION}..."
     apt update
     apt install -y openjdk-${JAVA_VERSION}-jdk
-    echo ">>> Java установлена."
-  fi
-}
-
-# Настройка JAVA_HOME
-setup_java_home() {
-  echo ">>> Настройка JAVA_HOME..."
-  JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-  if ! grep -q "JAVA_HOME" ~/.bashrc; then
-    echo "export JAVA_HOME=$JAVA_HOME" >> ~/.bashrc
-    echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> ~/.bashrc
-    export JAVA_HOME
-    export PATH="$JAVA_HOME/bin:$PATH"
-    echo "✅ JAVA_HOME настроен: $JAVA_HOME"
-  else
-    echo "✅ JAVA_HOME уже настроен."
-  fi
-}
-
-# Установка Maven
-install_maven() {
-  echo ">>> Установка Maven ${MAVEN_VERSION}..."
-  if check_command mvn; then
-    echo "Maven уже установлен."
-  else
-    wget -q $MAVEN_DOWNLOAD_URL -O /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
-    tar -xzf /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
-    ln -s /opt/apache-maven-${MAVEN_VERSION} $MAVEN_INSTALL_DIR
-    echo "export PATH=${MAVEN_INSTALL_DIR}/bin:\$PATH" >> ~/.bashrc
-    source ~/.bashrc
-    echo ">>> Maven ${MAVEN_VERSION} установлен."
-  fi
-}
-
-# Исправление прав на Maven
-fix_maven_permissions() {
-  echo ">>> Исправление прав доступа к Maven..."
-  if check_command mvn; then
-    MAVEN_BIN=$(which mvn)
-    if [ -x "$MAVEN_BIN" ]; then
-      echo "✅ Права на Maven уже установлены."
+    if check_java; then
+        log_success "Java ${JAVA_VERSION} installed successfully"
     else
-      sudo chmod +x "$MAVEN_BIN"
-      echo "✅ Права на Maven исправлены."
+        log_error "Failed to install Java ${JAVA_VERSION}"
+        exit 1
     fi
-  fi
 }
 
-# Установка Docker
+setup_java_home() {
+    log_info "Setting up JAVA_HOME..."
+    JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+    if ! grep -q "JAVA_HOME" /etc/environment; then
+        echo "JAVA_HOME=$JAVA_HOME" >> /etc/environment
+        export JAVA_HOME
+        log_success "JAVA_HOME configured: $JAVA_HOME"
+    else
+        log_success "JAVA_HOME already configured"
+    fi
+}
+
+# Maven Management
+check_maven() {
+    log_info "Checking Maven installation..."
+    if check_command mvn; then
+        maven_version=$(mvn -version | grep 'Apache Maven' | awk '{print $3}')
+        log_success "Maven is installed: version $maven_version"
+        return 0
+    else
+        log_error "Maven is not installed"
+        return 1
+    fi
+}
+
+install_maven() {
+    log_info "Installing Maven ${MAVEN_VERSION}..."
+    wget -q "$MAVEN_DOWNLOAD_URL" -O /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+    tar -xzf /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
+    ln -sf /opt/apache-maven-${MAVEN_VERSION} "$MAVEN_INSTALL_DIR"
+    
+    # Configure Maven environment
+    echo "export MAVEN_HOME=$MAVEN_INSTALL_DIR" > /etc/profile.d/maven.sh
+    echo "export PATH=\$MAVEN_HOME/bin:\$PATH" >> /etc/profile.d/maven.sh
+    chmod +x /etc/profile.d/maven.sh
+    source /etc/profile.d/maven.sh
+    
+    rm -f /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+    
+    if check_maven; then
+        log_success "Maven installed successfully"
+    else
+        log_error "Failed to install Maven"
+        exit 1
+    fi
+}
+
+# Docker Management
+check_docker() {
+    log_info "Checking Docker installation..."
+    if check_command docker; then
+        docker_version=$(docker --version | awk '{print $3}' | tr -d ',')
+        log_success "Docker is installed: version $docker_version"
+        
+        if docker info &>/dev/null; then
+            log_success "Docker daemon is running"
+            return 0
+        else
+            log_error "Docker daemon is not running"
+            return 1
+        fi
+    else
+        log_error "Docker is not installed"
+        return 1
+    fi
+}
+
 install_docker() {
-  echo ">>> Установка Docker..."
-  if check_command docker; then
-    echo "Docker уже установлен."
-  else
+    log_info "Installing Docker..."
     apt update
     apt install -y docker.io
     systemctl start docker
     systemctl enable docker
-    usermod -aG docker $USER
-    echo ">>> Docker установлен."
-  fi
+    
+    if check_docker; then
+        log_success "Docker installed successfully"
+    else
+        log_error "Failed to install Docker"
+        exit 1
+    fi
 }
 
-# Установка Docker Compose
-install_docker_compose() {
-  echo ">>> Установка Docker Compose ${DOCKER_COMPOSE_VERSION}..."
-  if check_command docker-compose; then
-    echo "Docker Compose уже установлен."
-  else
-    curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    echo ">>> Docker Compose установлен."
-  fi
+check_docker_permissions() {
+    log_info "Checking Docker permissions..."
+    if groups | grep -q docker; then
+        log_success "User is in the docker group"
+        return 0
+    else
+        log_error "User is not in the docker group"
+        return 1
+    fi
 }
 
-# Проверка установленных версий
-check_versions() {
-  echo ">>> Проверка установленных версий:"
-  echo -n "Java: "; java -version
-  echo -n "Maven: "; mvn -version
-  echo -n "Docker: "; docker --version
-  echo -n "Docker Compose: "; docker-compose --version
-}
-
-# Проверка и добавление пользователя в группу docker
 fix_docker_permissions() {
-  echo ">>> Проверка прав доступа к Docker..."
-  if groups | grep -q docker; then
-    echo "✅ Пользователь уже в группе docker."
-  else
-    sudo usermod -aG docker $USER
-    echo "✅ Пользователь добавлен в группу docker. Перезапустите сессию для применения изменений."
-  fi
+    log_info "Adding user to docker group..."
+    usermod -aG docker $USER
+    log_success "User added to docker group (requires logout/login to take effect)"
 }
 
-# Запуск всех проверок и исправлений
-echo ">>> Запуск настройки и проверки окружения..."
-install_java
-setup_java_home
-install_maven
-fix_maven_permissions
-install_docker
-install_docker_compose
-fix_docker_permissions
-check_versions
-echo ">>> Настройка и проверка завершены. Перезапустите терминал для применения изменений."
+# Docker Compose Management
+check_docker_compose() {
+    log_info "Checking Docker Compose installation..."
+    if check_command docker-compose; then
+        compose_version=$(docker-compose --version | awk '{print $3}' | tr -d ',')
+        log_success "Docker Compose is installed: version $compose_version"
+        return 0
+    else
+        log_error "Docker Compose is not installed"
+        return 1
+    fi
+}
+
+install_docker_compose() {
+    log_info "Installing Docker Compose ${DOCKER_COMPOSE_VERSION}..."
+    curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    
+    if check_docker_compose; then
+        log_success "Docker Compose installed successfully"
+    else
+        log_error "Failed to install Docker Compose"
+        exit 1
+    fi
+}
+
+# Main execution
+main() {
+    log_info "Starting environment setup and verification..."
+    check_root
+
+    # Java setup
+    if ! check_java; then
+        install_java
+    fi
+    setup_java_home
+
+    # Maven setup
+    if ! check_maven; then
+        install_maven
+    fi
+
+    # Docker setup
+    if ! check_docker; then
+        install_docker
+    fi
+    if ! check_docker_permissions; then
+        fix_docker_permissions
+    fi
+
+    # Docker Compose setup
+    if ! check_docker_compose; then
+        install_docker_compose
+    fi
+
+    # Final verification
+    log_info "Verifying all installations..."
+    check_java
+    check_maven
+    check_docker
+    check_docker_compose
+    check_docker_permissions
+
+    log_success "Environment setup complete!"
+    log_warning "Please log out and log back in for group changes to take effect."
+}
+
+# Execute main function
+main
