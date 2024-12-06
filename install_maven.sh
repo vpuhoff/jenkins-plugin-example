@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Версия Maven
-MAVEN_VERSION="3.9.5"
+MAVEN_VERSION="3.9.6"
 MAVEN_DOWNLOAD_URL="https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
 INSTALL_DIR="/opt/maven"
 
@@ -27,6 +27,7 @@ rm /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
 
 echo ">>> Проверка установки Maven..."
 mvn -version
+
 if [ $? -eq 0 ]; then
   echo "✅ Maven успешно установлен!"
 else

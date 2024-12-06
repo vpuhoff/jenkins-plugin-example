@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Group-Id: io.jenkins.plugins
+Artifact-Id: viewfilter
+Short-Name: viewfilter
+Long-Name: View Filter Plugin
+Url: https://github.com/jenkinsci/viewfilter-plugin
+Plugin-Version: 1.0-SNAPSHOT (private-ac699d6c-root)
+Hudson-Version: 2.440.3
+Jenkins-Version: 2.440.3
+Plugin-Developers: 
+Plugin-License-Name: MIT License
+Plugin-License-Url: https://opensource.org/license/mit/
+Plugin-ScmConnection: scm:git:https://github.com/jenkinsci/plugin-pom.gi
+ t/viewfilter
+Plugin-ScmTag: plugin-4.85
+Plugin-ScmUrl: https://github.com/jenkinsci/plugin-pom/viewfilter
+Plugin-GitHash: ac699d6cd80e17da4883fd0cc6e2574d22893159
+Implementation-Build: ac699d6cd80e17da4883fd0cc6e2574d22893159
+Libraries: /root/projects/jenkins-plugin-example/viewfilter/src/main/res
+ ources,/root/projects/jenkins-plugin-example/viewfilter/target/classes
+Resource-Path: /root/projects/jenkins-plugin-example/viewfilter/src/main
+ /webapp
+

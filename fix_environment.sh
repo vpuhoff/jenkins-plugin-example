@@ -9,9 +9,38 @@ check_command() {
   fi
 }
 
+# Установка Java 17
+install_java_17() {
+  echo ">>> Проверка установки Java 17..."
+  if check_command java; then
+    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    if [[ "$JAVA_VERSION" == 17* ]]; then
+      echo "✅ Java 17 уже установлена: $JAVA_VERSION"
+    else
+      echo "❌ Установлена неподходящая версия Java: $JAVA_VERSION. Устанавливаю Java 17..."
+      install_java
+    fi
+  else
+    echo "❌ Java не установлена. Устанавливаю Java 17..."
+    install_java
+  fi
+}
+
+# Функция установки Java 17
+install_java() {
+  sudo apt update
+  sudo apt install -y openjdk-17-jdk
+  if check_command java; then
+    echo "✅ Java 17 успешно установлена: $(java -version 2>&1 | head -n 1)"
+  else
+    echo "❌ Ошибка установки Java 17. Проверьте репозитории."
+    exit 1
+  fi
+}
+
 # Исправление JAVA_HOME
 fix_java_home() {
-  echo ">>> Исправление JAVA_HOME..."
+  echo ">>> Настройка JAVA_HOME..."
   if check_command java; then
     JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
     if ! grep -q "JAVA_HOME" ~/.bashrc; then
@@ -31,31 +60,22 @@ fix_java_home() {
 
 # Исправление прав для Maven
 fix_maven_permissions() {
-  echo ">>> Исправление прав доступа к Maven..."
-  
-  # Проверяем, установлен ли Maven
+  echo ">>> Проверка Maven..."
   if check_command mvn; then
-    MAVEN_BIN=$(which mvn)
-    if [ -x "$MAVEN_BIN" ]; then
-      echo "✅ Права на Maven уже установлены."
-    else
-      sudo chmod +x "$MAVEN_BIN"
-      echo "✅ Права на Maven исправлены."
-    fi
+    echo "✅ Maven уже установлен: $(mvn -version | head -n 1)"
   else
     echo "❌ Maven не найден. Устанавливаю Maven..."
     
-    # Устанавливаем Maven вручную
-    MAVEN_VERSION="3.9.5"
+    MAVEN_VERSION="3.9.6"
     MAVEN_DOWNLOAD_URL="https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
     INSTALL_DIR="/opt/maven"
     
-    # Скачиваем и устанавливаем Maven
+    # Установка Maven
     wget -q "$MAVEN_DOWNLOAD_URL" -O /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz
     sudo tar -xzf /tmp/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
     sudo ln -s /opt/apache-maven-${MAVEN_VERSION} "$INSTALL_DIR"
     
-    # Добавляем Maven в PATH
+    # Настройка PATH
     if ! grep -q "MAVEN_HOME" ~/.bashrc; then
       echo "export MAVEN_HOME=$INSTALL_DIR" >> ~/.bashrc
       echo "export PATH=\$MAVEN_HOME/bin:\$PATH" >> ~/.bashrc
@@ -67,14 +87,13 @@ fix_maven_permissions() {
   fi
 }
 
-
-# Переустановка Docker Compose
+# Установка и проверка Docker Compose
 fix_docker_compose() {
   echo ">>> Проверка Docker Compose..."
   if ! check_command docker-compose; then
     echo "❌ Docker Compose не установлен. Устанавливаю..."
-    DOCKER_COMPOSE_VERSION="1.29.2"
-    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    DOCKER_COMPOSE_VERSION="2.20.2"
+    sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
     echo "✅ Docker Compose установлен: $(docker-compose --version)"
   else
@@ -94,9 +113,10 @@ fix_docker_permissions() {
 }
 
 # Запуск исправлений
-echo ">>> Запуск исправления окружения..."
+echo ">>> Запуск настройки окружения..."
+install_java_17
 fix_java_home
 fix_maven_permissions
 fix_docker_compose
 fix_docker_permissions
-echo ">>> Исправления завершены. Перезапустите терминал для применения изменений."
+echo ">>> Настройка завершена. Перезапустите терминал для применения изменений."

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Переменные
-JAVA_VERSION="11"
-MAVEN_VERSION="3.9.5"
+JAVA_VERSION="17"
+MAVEN_VERSION="3.9.6"
 MAVEN_DOWNLOAD_URL="https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
 MAVEN_INSTALL_DIR="/opt/maven"
 DOCKER_COMPOSE_VERSION="1.29.2"

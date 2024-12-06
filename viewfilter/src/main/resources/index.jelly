@@ -1,20 +1,4 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:x="jelly:xml">
-    <!-- Подключение CSS -->
-    <style>
-        /* Ваши стили */
-        body {
-            background-color: #f0f0f0;
-        }
-    </style>
-
-    <!-- Подключение JS -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            console.log("Custom JS loaded!");
-        });
-    </script>
-
-    <link rel="stylesheet" type="text/css" href="${resURL}/css/custom.css"/>
-    <script src="${resURL}/js/custom.js"></script>
-</j:jelly>
+<div>
+    This plugin adds custom JavaScript functionality to all Jenkins pages, allowing for enhanced user interface customization and additional features across the Jenkins instance.
+</div>
